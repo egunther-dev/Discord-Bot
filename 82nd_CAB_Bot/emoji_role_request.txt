@@ -1,0 +1,110 @@
+import discord
+from discord.ext import commands, tasks
+
+bot = commands.Bot(command_prefix = ".", intents = discord.Intents.all())
+
+@bot.event
+async def on_ready():
+    print("Bot Online")
+
+with open("token.txt") as file:
+    token = file.read()
+
+reaction_role_channel_id = 1328843547331395698
+role_message_id = None
+reactions_to_roles = {
+    "1️⃣": 1328876375838298157,
+    "2️⃣": 1328876392959443046,
+    "3️⃣": 1328876404816744519,
+}
+
+@bot.command()
+@commands.has_permissions(manage_roles=True)
+async def setup_reaction_roles(ctx):
+    global role_message_id
+    channel = bot.get_channel(reaction_role_channel_id)
+    if channel is None:
+        await ctx.send("Invailid channel ID.")
+        return
+    
+    message = await channel.send(
+        "React For the Following Roles: \n"
+        "1️⃣ - CH-47D\n"
+        "2️⃣ - AH-64E\n"
+        "3️⃣ - OH-58D\n"
+        "1️⃣ - F-15E\n"
+        "2️⃣ - F-15C\n"
+        "3️⃣ - F-16C/D\n"
+        "1️⃣ - A-10C\n"
+        "2️⃣ - AC-130J\n"
+        "3️⃣ - C-17\n"
+        "1️⃣ - B-2\n"
+        "2️⃣ - B-21\n"
+        "3️⃣ - B-52H\n"
+        "1️⃣ - A-10C\n"
+        "2️⃣ - AC-130J\n"
+        "3️⃣ - C-17\n"
+        "1️⃣ - B-2\n"
+        "2️⃣ - B-21\n"
+        "3️⃣ - B-52H\n"
+
+    )
+    for emoji in reactions_to_roles:
+        await message.add_reaction(emoji)
+
+    role_message_id = message.id
+    await ctx.send("Reaction role message sent and role added.") 
+
+@bot.event
+async def on_raw_reaction_add(payload):
+
+    if payload.message_id != role_message_id:
+        return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if guild is None:
+        return
+    
+    role_id = reactions_to_roles.get(str(payload.emoji))
+    if role_id is None:
+        return
+    
+    role = guild.get_role(role_id)
+    if role is None:
+        return
+    
+    member = guild.get_member(payload.user_id)
+    if member is None or member.bot:
+        return
+    
+    await member.add_roles(role)
+    print(f"Assigned {role.name} to {member.name}")
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+ 
+    if payload.message_id != role_message_id:
+        return
+    
+    guild = bot.get_guild(payload.guild_id)
+    if guild is None:
+        return
+    
+    role_id = reactions_to_roles.get(str(payload.emoji))
+    if role_id is None:
+        return
+    
+    role = guild.get_role(role_id)
+    if role is None:
+        return
+    
+    member = guild.get_member(payload.user_id)
+    if member is None or member.bot:
+        return
+
+    await member.remove_roles(role)
+    print(f"Removed {role.name} from {member.name}")
+
+
+
+bot.run(token)
